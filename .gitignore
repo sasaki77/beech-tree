@@ -1,0 +1,42 @@
+# =========================
+# OS / Editor / IDE
+# =========================
+# macOS / Linux
+.DS_Store
+.AppleDouble
+.Trashes
+*~
+*.swp
+*.swo
+
+# VSCode
+.vscode/
+.code-workspace
+
+# CLion / JetBrains
+.idea/
+
+# =========================
+# Build & Artifacts (CMake)
+# =========================
+# Common build dirs
+/build/
+/build-debug/
+/build-release/
+/build-relwithdebinfo/
+/build-minsizerel/
+
+# CMake cache & files
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/
+*.cmake
+CMakeUserPresets.json
+CMakePresets.json
+
+# Ninja / Make
+*.ninja
+.ninja_deps
+
+### Others ###
+env/
