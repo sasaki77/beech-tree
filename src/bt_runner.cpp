@@ -2,6 +2,9 @@
 
 #include <behaviortree_cpp/xml_parsing.h>
 
+#include "actions/caget_node.h"
+#include "actions/print_node.h"
+
 namespace {
 int map_status_to_exit_code(BT::NodeStatus status) {
     switch (status) {
@@ -20,6 +23,17 @@ namespace bchtree {
 int BTRunner::run(const std::string& treePath) {
     BT::BehaviorTreeFactory factory;
     blackboard_ = BT::Blackboard::create();
+
+    auto ctx = std::make_shared<epics::ca::CAContextManager>();
+    ctx->Init();
+
+    auto pv_manager = std::make_shared<epics::ca::PVManager>(ctx);
+    factory.registerNodeType<CAGetNode<epics::PVData>>("CAGet", ctx,
+                                                       pv_manager);
+    factory.registerNodeType<CAGetNode<double>>("CAGetDouble", ctx, pv_manager);
+    factory.registerNodeType<CAGetNode<int>>("CAGetInt", ctx, pv_manager);
+    factory.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx,
+                                                     pv_manager);
 
     BT::Tree tree = factory.createTreeFromFile(treePath, blackboard_);
     tree_ = std::make_unique<BT::Tree>(std::move(tree));
