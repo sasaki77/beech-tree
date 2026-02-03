@@ -1,7 +1,5 @@
 #include "epics/ca/ca_pv_manager.h"
 
-#include <utility>
-
 namespace bchtree::epics::ca {
 
 std::shared_ptr<CAPV> PVManager::Get(const std::string& pv_name) {
