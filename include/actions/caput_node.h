@@ -28,6 +28,7 @@ class CAPutNode : public BT::StatefulActionNode {
             InputPort<std::string>("pv"),
             InputPort<T>("value"),
             InputPort<int>("timeout"),
+            InputPort<bool>("force_write"),
         };
     }
 
@@ -44,6 +45,10 @@ class CAPutNode : public BT::StatefulActionNode {
             throw BT::RuntimeError("CAPutNode: missing required input [value]");
         }
         BT::TreeNode::getInput("timeout", timeout_ms_);
+        BT::TreeNode::getInput("force_write", force_write_);
+
+        deadline_ = std::chrono::steady_clock::now() +
+                    std::chrono::milliseconds(timeout_ms_);
 
         if (!pv_) {
             pv_ = pv_manager_->Get(pv_name_);
@@ -55,20 +60,23 @@ class CAPutNode : public BT::StatefulActionNode {
 
         if (!connected_) {
             pv_->Connect();
+            return BT::NodeStatus::RUNNING;
         }
 
-        if (connected_) {
-            // Issue put
-            bool status = pv_->PutCB(
-                value_, [this](bool success) { handlePutResult(success); });
-            if (!status) {
-                throw BT::RuntimeError("CAPutNode: failed to call PutCB");
+        if (!force_write_) {
+            T current_val = pv_->GetAs<T>();
+            if (value_ == current_val) {
+                return BT::NodeStatus::SUCCESS;
             }
-            requested_ = true;
         }
 
-        deadline_ = std::chrono::steady_clock::now() +
-                    std::chrono::milliseconds(timeout_ms_);
+        // Issue put
+        bool status = pv_->PutCB(
+            value_, [this](bool success) { handlePutResult(success); });
+        if (!status) {
+            throw BT::RuntimeError("CAPutNode: failed to call PutCB");
+        }
+        requested_ = true;
 
         return BT::NodeStatus::RUNNING;
     }
@@ -133,6 +141,7 @@ class CAPutNode : public BT::StatefulActionNode {
     std::string pv_name_;
     int timeout_ms_{kDefaultTimeoutMs};  // >= 0
     T value_;
+    bool force_write_{false};
 
     // Deadline for the current execution (set in onStart)
     std::chrono::steady_clock::time_point deadline_{};
