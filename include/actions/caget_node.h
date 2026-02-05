@@ -5,13 +5,6 @@
 #include "epics/ca/ca_pv_manager.h"
 #include "epics/types.h"
 
-namespace {
-void printScalar(std::ostream& os, const bchtree::epics::PVScalarValue& s) {
-    std::visit([&](auto v) { os << v; }, s);
-}
-
-}  // namespace
-
 namespace bchtree {
 
 template <typename T>
@@ -34,6 +27,7 @@ class CAGetNode : public BT::StatefulActionNode {
         return {
             InputPort<std::string>("pv"),
             InputPort<int>("timeout"),
+            InputPort<bool>("use_monitor"),
             OutputPort<T>("result"),
         };
     }
@@ -48,9 +42,13 @@ class CAGetNode : public BT::StatefulActionNode {
             throw BT::RuntimeError("CAGetNode: missing required input [pv]");
         }
         BT::TreeNode::getInput("timeout", timeout_ms_);
+        BT::TreeNode::getInput("use_monitor", use_monitor_);
 
         promise_ = std::promise<T>();
         future_ = promise_.get_future();
+
+        deadline_ = std::chrono::steady_clock::now() +
+                    std::chrono::milliseconds(timeout_ms_);
 
         if (!pv_) {
             pv_ = pv_manager_->Get(pv_name_);
@@ -62,26 +60,35 @@ class CAGetNode : public BT::StatefulActionNode {
 
         if (!connected_) {
             pv_->Connect();
+            return BT::NodeStatus::RUNNING;
         }
 
-        if (connected_) {
-            // Issue get
-            bool status =
-                pv_->GetCBAs<T>([this](T sample) { handleGetResult(sample); },
-                                std::chrono::milliseconds(timeout_ms_));
-            if (!status) {
-                throw BT::RuntimeError("CAGetNode: failed to call getCB");
-            }
-            requested_ = true;
+        // Use monitor value
+        if (use_monitor_) {
+            T sample = pv_->GetAs<T>();
+            setOutput("result", sample);
+            return BT::NodeStatus::SUCCESS;
         }
 
-        deadline_ = std::chrono::steady_clock::now() +
-                    std::chrono::milliseconds(timeout_ms_);
+        // Issue getCB
+        bool status =
+            pv_->GetCBAs<T>([this](T sample) { handleGetResult(sample); },
+                            std::chrono::milliseconds(timeout_ms_));
+        if (!status) {
+            throw BT::RuntimeError("CAGetNode: failed to call getCB");
+        }
+        requested_ = true;
 
         return BT::NodeStatus::RUNNING;
     }
 
     BT::NodeStatus onRunning() override {
+        if (use_monitor_ && connected_) {
+            T sample = pv_->GetAs<T>();
+            setOutput("result", sample);
+            return BT::NodeStatus::SUCCESS;
+        }
+
         if (!requested_ && connected_) {
             // Issue get
             bool status =
@@ -98,7 +105,6 @@ class CAGetNode : public BT::StatefulActionNode {
             try {
                 auto samp = future_.get();
                 setOutput("result", samp);
-                // printScalar(std::cout, samp.value);
                 return BT::NodeStatus::SUCCESS;
             } catch (...) {
                 return BT::NodeStatus::FAILURE;
@@ -154,6 +160,7 @@ class CAGetNode : public BT::StatefulActionNode {
     // Inputs (immutable during a single tick execution)
     std::string pv_name_;
     int timeout_ms_{kDefaultTimeoutMs};  // >= 0
+    bool use_monitor_{true};
 
     // Deadline for the current execution (set in onStart)
     std::chrono::steady_clock::time_point deadline_{};
