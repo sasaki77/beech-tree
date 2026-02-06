@@ -2,7 +2,6 @@
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
 
 namespace bchtree {
 void Logger::setLevel(const std::string& level) {
@@ -12,6 +11,8 @@ void Logger::setLevel(const std::string& level) {
         spdlog::set_level(spdlog::level::warn);
     else if (level == "error")
         spdlog::set_level(spdlog::level::err);
+    else if (level == "debug")
+        spdlog::set_level(spdlog::level::debug);
     else
         spdlog::set_level(spdlog::level::info);
 }
@@ -28,9 +29,8 @@ void Logger::ensure_init() {
             file_path_, true);
         sinks.push_back(file_sink);
     }
-    auto logger =
+    logger_ =
         std::make_shared<spdlog::logger>("bt", sinks.begin(), sinks.end());
-    spdlog::set_default_logger(logger);
     spdlog::set_pattern("%Y-%m-%dT%H:%M:%S.%e %z [%l] %v");
     initialized_ = true;
 }
@@ -47,4 +47,10 @@ void Logger::error(const std::string& msg) {
     ensure_init();
     spdlog::error(msg);
 }
+void Logger::debug(const std::string& msg) {
+    ensure_init();
+    spdlog::debug(msg);
+}
+void Logger::flush() { logger_->flush(); }
+
 }  // namespace bchtree
