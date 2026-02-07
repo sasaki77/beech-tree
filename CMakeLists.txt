@@ -25,6 +25,7 @@ add_library(bchtree
     src/epics/ca/ca_pv.cpp
     src/epics/ca/ca_context_manager.cpp
     src/epics/ca/ca_pv_manager.cpp
+    src/actions/print_node.cpp
 )
 target_include_directories(bchtree PUBLIC include)
 target_link_libraries(bchtree PUBLIC
