@@ -8,6 +8,12 @@ export VCPKG_ROOT=/path/to/vcpkg
 export PATH=$VCPKG_ROOT:$PATH
 ```
 
+## Update vcpkg baseline vesion to constrain package versions
+
+```bash
+vcpkg x-update-baseline
+```
+
 ## Build
 
 ```bash
