@@ -10,6 +10,7 @@ class SoftIocFixture : public ::testing::Test {
     static inline SoftIocRunner runner_{};
     static inline std::shared_ptr<bchtree::epics::ca::CAContextManager> ctx_{
         std::make_shared<bchtree::epics::ca::CAContextManager>()};
+    static inline std::string db_text_;
 
     static void SetUpTestSuite();
     static void TearDownTestSuite();

@@ -16,7 +16,7 @@ void SoftIocFixture::SetUpTestSuite() {
 
     ctx_->EnsureAttached();
 
-    const std::string db_text = R"DB(
+    db_text_ = R"DB(
             record(ao, "TEST:AO") {
                 field(VAL,  "0")
                 field(PINI, "YES")
@@ -31,7 +31,7 @@ void SoftIocFixture::SetUpTestSuite() {
             }
         )DB";
 
-    runner_.Start(db_text);
+    runner_.Start(db_text_);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(800));
 }
