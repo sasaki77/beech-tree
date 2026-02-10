@@ -5,6 +5,7 @@ set(TEST_SOURCES
     softioc_fixture.cpp
     actions/gtest_print_node.cpp
     epics/gtest_ca_pv.cpp
+    epics/gtest_ca_pv_manager.cpp
 )
 
 add_executable(unit_tests ${TEST_SOURCES})
