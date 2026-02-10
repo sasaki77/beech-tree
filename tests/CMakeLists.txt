@@ -1,6 +1,7 @@
 find_package(GTest REQUIRED)
 
 set(TEST_SOURCES
+    softioc_runner.cpp
     softioc_fixture.cpp
     actions/gtest_print_node.cpp
 )
