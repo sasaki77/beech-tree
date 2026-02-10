@@ -36,6 +36,17 @@ struct PutScalarVisitor {
     }
 };
 
+CAPV::CAPV(std::shared_ptr<CAContextManager> ctx, std::string pv_name)
+    : pv_name_(std::move(pv_name)), ctx_(std::move(ctx)) {}
+
+CAPV::~CAPV() {
+    ClearMonitor();
+    if (chid_) {
+        ca_clear_channel(chid_);
+        chid_ = nullptr;
+    }
+}
+
 void CAPV::AddConnCB(ConnCallback cb) {
     std::lock_guard<std::mutex> lock(mtx_);
     conn_cbs_.push_back(std::move(cb));

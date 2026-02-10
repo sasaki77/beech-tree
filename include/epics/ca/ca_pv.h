@@ -25,8 +25,8 @@ struct GetCBCtxAs {
 
 class CAPV {
    public:
-    explicit CAPV(std::shared_ptr<CAContextManager> ctx, std::string pv_name)
-        : pv_name_(std::move(pv_name)), ctx_(std::move(ctx)) {}
+    explicit CAPV(std::shared_ptr<CAContextManager> ctx, std::string pv_name);
+    ~CAPV() noexcept;
 
     void AddConnCB(ConnCallback cb);
     void Connect();
